@@ -1,14 +1,16 @@
 #pragma once
-#include <iostream>
-#include <memory>
+
 #include <string>
+#include <memory>
+#include <iostream>
 #include "Models.h"
 #include "PricingStrategy.h"
+
+using namespace std;
 
 enum class RideStatus
 {
     Requested,
-    Accepted,
     InProgress,
     Completed,
     Cancelled
@@ -20,26 +22,26 @@ private:
     string rideId;
     shared_ptr<Rider> rider;
     shared_ptr<Driver> driver;
-    pair<double, double> source;
-    pair<double, double> destination;
+    pair<double, double> pickupLocation;
+    pair<double, double> destinationLocation;
     double distanceKm;
     double fare;
     RideStatus status;
 
 public:
-    Ride(string id, shared_ptr<Rider> r, pair<double, double> src, pair<double, double> dest, double distance)
-        : rideId(id), rider(r), driver(nullptr), source(src), destination(dest),
-          distanceKm(distance), fare(0.0), status(RideStatus::Requested) {}
+    Ride(string id, shared_ptr<Rider> r, pair<double, double> pickup, pair<double, double> dest, double dist)
+        : rideId(id), rider(r), pickupLocation(pickup), destinationLocation(dest),
+          distanceKm(dist), driver(nullptr), fare(0.0), status(RideStatus::Requested) {}
 
-    // Assign a driver to the ride and update the status
     void assignDriver(shared_ptr<Driver> d)
     {
         driver = d;
-        status = RideStatus::Accepted;
-        driver->setAvailability(false); // Mark the driver as unavailable
+        if (driver)
+        {
+            driver->setAvailability(false); // Driver becomes busy
+        }
     }
 
-    // Calculate the fare for the ride based on the selected strategy
     void calculateFare(const PricingStrategy &strategy)
     {
         if (driver && driver->getVehicle())
@@ -49,37 +51,34 @@ public:
         }
     }
 
-    // Start the ride
+    double getFare() const { return fare; }
+
     void startRide()
     {
-        if (status == RideStatus::Accepted)
+        if (driver != nullptr)
         {
             status = RideStatus::InProgress;
         }
     }
 
-    // Complete the ride and process payment
     bool completeRide()
     {
-        if (status == RideStatus::InProgress)
+        if (status == RideStatus::InProgress && rider != nullptr && driver != nullptr)
         {
             if (rider->deductFunds(fare))
-            { // Deduct from the Rider's wallet
+            {
                 status = RideStatus::Completed;
-                driver->setAvailability(true); // Mark the driver as available
+                driver->setAvailability(true); // Driver is available again
+                driver->updateLocation(destinationLocation.first, destinationLocation.second);
                 return true;
             }
             else
             {
-                cout << "Error: Payment failed due to insufficient funds!\n";
+                status = RideStatus::Cancelled;
+                driver->setAvailability(true);
                 return false;
             }
         }
         return false;
     }
-
-    // Getters
-    double getFare() const { return fare; }
-    RideStatus getStatus() const { return status; }
-    shared_ptr<Driver> getDriver() const { return driver; }
 };
