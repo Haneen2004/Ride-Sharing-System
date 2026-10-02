@@ -1,11 +1,15 @@
 #pragma once
-#include "Models.h"
+
+#include <vector>
+#include <memory>
 #include <cmath>
+#include "Models.h"
+
+using namespace std;
 
 class MatchingEngine
 {
 private:
-    // Euclidean Distance between two points (x1, y1) and (x2, y2)
     static double calculateDistance(pair<double, double> loc1, pair<double, double> loc2)
     {
         double dx = loc1.first - loc2.first;
@@ -14,28 +18,26 @@ private:
     }
 
 public:
-    // Find the nearest available driver of the preferred vehicle type
     static shared_ptr<Driver> findNearestDriver(
         pair<double, double> riderLocation,
-        VehicleType preferredType,
+        VehicleType requestedType,
         const vector<shared_ptr<Driver>> &drivers)
     {
-        shared_ptr<Driver> bestDriver = nullptr;
-        double minDistance = 1e9; // Initialize with a large number
+        shared_ptr<Driver> nearestDriver = nullptr;
+        double minDistance = 1e9; // infinity
 
         for (const auto &driver : drivers)
         {
-            // Conditions: the driver is available + the type of their vehicle matches the preferred type
-            if (driver->getAvailability() && driver->getVehicle()->getType() == preferredType)
+            if (driver->getAvailability() && driver->getVehicle()->getType() == requestedType)
             {
                 double dist = calculateDistance(riderLocation, driver->getLocation());
                 if (dist < minDistance)
                 {
                     minDistance = dist;
-                    bestDriver = driver;
+                    nearestDriver = driver;
                 }
             }
         }
-        return bestDriver; // Returns the nearest available driver or nullptr if none is available
+        return nearestDriver;
     }
 };
