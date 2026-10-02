@@ -1,26 +1,28 @@
 #pragma once
-#include <cmath>
+
+#include <iostream>
+
+using namespace std;
 
 // Strategy Interface
 class PricingStrategy
 {
 public:
     virtual ~PricingStrategy() = default;
-    virtual double calculateFare(double distanceKm, double baseFarePerKm) const = 0;
+    virtual double calculateFare(double distanceKm, double baseRatePerKm) const = 0;
 };
 
-// 1. Standard Pricing Strategy
+// Standard Pricing Implementation
 class StandardPricing : public PricingStrategy
 {
 public:
-    double calculateFare(double distanceKm, double baseFarePerKm) const override
+    double calculateFare(double distanceKm, double baseRatePerKm) const override
     {
-        double baseBookingFee = 5.0;
-        return baseBookingFee + (distanceKm * baseFarePerKm);
+        return distanceKm * baseRatePerKm;
     }
 };
 
-// 2. Surge Pricing Strategy
+// Surge Pricing Implementation
 class SurgePricing : public PricingStrategy
 {
 private:
@@ -29,9 +31,8 @@ private:
 public:
     SurgePricing(double multiplier) : surgeMultiplier(multiplier) {}
 
-    double calculateFare(double distanceKm, double baseFarePerKm) const override
+    double calculateFare(double distanceKm, double baseRatePerKm) const override
     {
-        double baseBookingFee = 5.0;
-        return (baseBookingFee + (distanceKm * baseFarePerKm)) * surgeMultiplier;
+        return distanceKm * baseRatePerKm * surgeMultiplier;
     }
 };
