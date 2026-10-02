@@ -1,0 +1,4 @@
+DriverID,Name,Phone,VehicleType,LicensePlate,Model,LocationX,LocationY
+D1,Ahmed Hassan,01011111111,Economy,ABC-1234,Toyota Corolla,2.0,3.0
+D2,Mohamed Ali,01222222222,Premium,VIP-7777,Mercedes E-Class,10.0,15.0
+D3,Omar Khaled,01533333333,Scooter,SCT-9999,Honda Dio,1.0,1.0
