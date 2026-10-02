@@ -48,7 +48,6 @@ public:
             getline(ss, xStr, ',');
             getline(ss, yStr, ',');
 
-            // Polymorphic Vehicle instantiation
             shared_ptr<Vehicle> vehicle = nullptr;
             if (vType == "Economy")
             {
@@ -104,7 +103,7 @@ public:
             getline(ss, xStr, ',');
             getline(ss, yStr, ',');
 
-            auto rider = make_shared<Rider>(id, name, phone, stod(balanceStr));
+            auto rider = make_shared<Rider>(id, name, phone, stod(balanceStr), make_pair(stod(xStr), stod(yStr)));
             riders.push_back(rider);
         }
 
@@ -118,9 +117,9 @@ public:
 // ==========================================
 int main()
 {
-    cout << "===========================\n";
+    cout << "==========================\n";
     cout << "  RIDE-SHARING SYSTEM \n";
-    cout << "===========================\n\n";
+    cout << "==========================\n\n";
 
     // 1. Load Data dynamically from CSV Files
     auto systemDrivers = DataLoader::loadDriversFromCSV("drivers.csv");
@@ -135,52 +134,62 @@ int main()
     cout << "--> Successfully loaded " << systemDrivers.size() << " drivers and "
          << systemRiders.size() << " riders from CSV files.\n\n";
 
-    // 2. Select First Rider from CSV
-    auto currentRider = systemRiders[0];
-    pair<double, double> riderLocation = {0.0, 0.0};
-    pair<double, double> destinationLocation = {6.0, 8.0};
-    double estimatedDistanceKm = 10.0;
-
-    cout << "--> Rider Selected: " << currentRider->getName() << " (ID: " << currentRider->getId() << ")\n";
-    cout << "--> Initial Wallet Balance: " << currentRider->getBalance() << " EGP\n";
-    cout << "--> Requesting Category: Economy | Estimated Distance: " << estimatedDistanceKm << " km\n\n";
-
-    // 3. Match Nearest Driver
-    auto matchedDriver = MatchingEngine::findNearestDriver(riderLocation, VehicleType::Economy, systemDrivers);
-
-    if (matchedDriver != nullptr)
+    // 2. Loop through ALL Riders loaded from riders.csv
+    int rideCounter = 1001;
+    for (const auto &currentRider : systemRiders)
     {
-        cout << "[MATCH SUCCESS] Nearest Driver Found:\n";
-        cout << "    - Name: " << matchedDriver->getName() << " (ID: " << matchedDriver->getId() << ")\n";
-        cout << "    - Vehicle: " << (matchedDriver->getVehicle()->getType() == VehicleType::Economy ? "Economy" : "Other") << "\n";
-        cout << "    - Location: (" << matchedDriver->getLocation().first << ", " << matchedDriver->getLocation().second << ")\n\n";
+        cout << "-------------------------------------------------\n";
 
-        // 4. Create Ride Transaction
-        Ride currentRide("RIDE-9901", currentRider, riderLocation, destinationLocation, estimatedDistanceKm);
-        currentRide.assignDriver(matchedDriver);
+        pair<double, double> riderLocation = currentRider->getLocation();
+        pair<double, double> destinationLocation = {10.0, 10.0};
+        double estimatedDistanceKm = 8.5;
 
-        // 5. Apply Surge Pricing Strategy
-        SurgePricing surgePricing(1.25);
-        currentRide.calculateFare(surgePricing);
+        cout << "--> Rider: " << currentRider->getName() << " (ID: " << currentRider->getId() << ")\n";
+        cout << "--> Pickup Location: (" << riderLocation.first << ", " << riderLocation.second << ")\n";
+        cout << "--> Initial Wallet Balance: " << currentRider->getBalance() << " EGP\n";
+        cout << "--> Requesting Category: Economy | Distance: " << estimatedDistanceKm << " km\n\n";
 
-        cout << "--> Total Calculated Fare (Surge 1.25x): " << currentRide.getFare() << " EGP\n";
+        // 3. Match Nearest Driver
+        auto matchedDriver = MatchingEngine::findNearestDriver(riderLocation, VehicleType::Economy, systemDrivers);
 
-        // 6. Execute Ride Lifecycle
-        currentRide.startRide();
-        cout << "--> Ride Status: IN PROGRESS...\n";
-
-        if (currentRide.completeRide())
+        if (matchedDriver != nullptr)
         {
-            cout << "\n[RIDE COMPLETED SUCCESSFULLY]\n";
-            cout << "--> Remaining Balance for " << currentRider->getName() << ": " << currentRider->getBalance() << " EGP\n";
-            cout << "--> Driver Availability Status: " << (matchedDriver->getAvailability() ? "Available" : "Busy") << "\n";
+            cout << "[MATCH SUCCESS] Nearest Driver Found:\n";
+            cout << "    - Name: " << matchedDriver->getName() << " (ID: " << matchedDriver->getId() << ")\n";
+            cout << "    - Driver Location: (" << matchedDriver->getLocation().first << ", " << matchedDriver->getLocation().second << ")\n\n";
+
+            // 4. Create Ride Transaction
+            string rideId = "RIDE-" + to_string(rideCounter++);
+            Ride currentRide(rideId, currentRider, riderLocation, destinationLocation, estimatedDistanceKm);
+            currentRide.assignDriver(matchedDriver);
+
+            // 5. Apply Pricing Strategy
+            SurgePricing surgePricing(1.25);
+            currentRide.calculateFare(surgePricing);
+
+            cout << "--> Total Calculated Fare (Surge 1.25x): " << currentRide.getFare() << " EGP\n";
+
+            // 6. Execute Ride Lifecycle
+            currentRide.startRide();
+            cout << "--> Ride Status: IN PROGRESS...\n";
+
+            if (currentRide.completeRide())
+            {
+                cout << "\n[RIDE COMPLETED SUCCESSFULLY]\n";
+                cout << "--> Remaining Balance for " << currentRider->getName() << ": " << currentRider->getBalance() << " EGP\n";
+                cout << "--> Driver " << matchedDriver->getName() << " availability: " << (matchedDriver->getAvailability() ? "Available" : "Busy") << "\n\n";
+            }
+            else
+            {
+                cout << "\n[RIDE FAILED] Insufficient Wallet Balance!\n\n";
+            }
+        }
+        else
+        {
+            cout << "[MATCH FAILED] No available drivers found for this ride.\n\n";
         }
     }
-    else
-    {
-        cout << "[MATCH FAILED] No available drivers found for the requested category.\n";
-    }
 
-    cout << "\n=================================================\n";
+    cout << "=================================================\n";
     return 0;
 }
