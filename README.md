@@ -1,6 +1,6 @@
 # Ride-Sharing System Simulation (C++ OOP)
 
-A modular, Object-Oriented Ride-Sharing System Simulation built in **C++17**. The project models real-world ride-hailing services (like Uber/Careem) applying core software engineering design patterns, object-oriented principles, and dynamic data loading via file I/O (`CSV`).
+A modular, Object-Oriented Ride-Sharing System Simulation built in **C++**. The project models real-world ride-hailing services (like Uber/Careem) applying core software engineering design patterns, object-oriented principles, and dynamic data loading via file I/O (`CSV`).
 
 ---
 
